@@ -1,0 +1,23 @@
+# Entornos virtuales
+.venv/
+venv/
+ENV/
+env/
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Configuraciones locales de Streamlit
+.streamlit/
+
+# Archivos temporales de sistema / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Archivos comprimidos temporales
+archive.zip
