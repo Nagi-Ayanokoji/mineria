@@ -2,11 +2,12 @@
 app.py
 ======
 Frontend interactivo para DataCleaner Studio.
-Diseño moderno con paleta de colores pasteles, transiciones suaves
-y menú de navegación superior.
+Diseño moderno con paleta pastel, transiciones suaves y soporte completo
+tanto para TEMA CLARO como TEMA OSCURO (sin texto invisible).
+Menú superior por pestañas.
 
 Arquitectura:
-  - Presentación pura (Streamlit + CSS personalizado).
+  - Presentación pura (Streamlit + CSS adaptativo).
   - Toda la lógica de negocio se delega a la capa 'services/'.
 """
 
@@ -47,7 +48,7 @@ from services.chart_service import (
 )
 
 # ---------------------------------------------------------------------------
-# 1. Configuración de página y estilos pasteles con transiciones suaves
+# 1. Configuración de página y estilos pasteles adaptativos (Light & Dark)
 # ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="DataCleaner Studio",
@@ -56,38 +57,107 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-PASTEL_CSS = """
+ADAPTIVE_CSS = """
 <style>
-/* Importación de tipografía moderna */
+/* Tipografía moderna */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #2D3748;
+/* Variables CSS para modo claro por defecto */
+:root {
+    --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 50%, #FAF5FF 100%);
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --card-border: rgba(226, 232, 240, 0.95);
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --nav-bg: rgba(255, 255, 255, 0.92);
+    --nav-border: rgba(226, 232, 240, 0.9);
+    --tab-text: #64748B;
+    --tab-hover: #4F46E5;
+    --tab-active-bg: linear-gradient(135deg, #E0E7FF 0%, #EDE9FE 100%);
+    --tab-active-text: #4338CA;
+    --tab-active-border: #C7D2FE;
+    --metric-bg: rgba(255, 255, 255, 0.92);
+    --metric-border: #E2E8F0;
+    --card-shadow: 0 8px 24px -6px rgba(148, 163, 184, 0.12);
+    --timeline-bg: rgba(255, 255, 255, 0.85);
+    --timeline-text: #334155;
+    --btn-bg: #FFFFFF;
+    --btn-text: #334155;
+    --btn-border: #CBD5E1;
 }
 
-/* Fondo con gradiente suave pastel y transición */
+/* Variables cuando el sistema o Streamlit están en MODO OSCURO */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-gradient: linear-gradient(135deg, #0B0F19 0%, #111827 50%, #1E1B4B 100%);
+        --card-bg: rgba(17, 24, 39, 0.88);
+        --card-border: rgba(55, 65, 81, 0.9);
+        --text-primary: #F3F4F6;
+        --text-secondary: #9CA3AF;
+        --nav-bg: rgba(17, 24, 39, 0.92);
+        --nav-border: rgba(55, 65, 81, 0.9);
+        --tab-text: #9CA3AF;
+        --tab-hover: #A5B4FC;
+        --tab-active-bg: linear-gradient(135deg, #312E81 0%, #4C1D95 100%);
+        --tab-active-text: #EEF2FF;
+        --tab-active-border: #6366F1;
+        --metric-bg: rgba(17, 24, 39, 0.9);
+        --metric-border: #374151;
+        --card-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+        --timeline-bg: rgba(17, 24, 39, 0.85);
+        --timeline-text: #E5E7EB;
+        --btn-bg: #1F2937;
+        --btn-text: #F3F4F6;
+        --btn-border: #4B5563;
+    }
+}
+
+/* Soporte explícito cuando Streamlit tiene tema dark */
+[data-theme="dark"], .stApp[data-theme="dark"] {
+    --bg-gradient: linear-gradient(135deg, #0B0F19 0%, #111827 50%, #1E1B4B 100%);
+    --card-bg: rgba(17, 24, 39, 0.88);
+    --card-border: rgba(55, 65, 81, 0.9);
+    --text-primary: #F3F4F6;
+    --text-secondary: #9CA3AF;
+    --nav-bg: rgba(17, 24, 39, 0.92);
+    --nav-border: rgba(55, 65, 81, 0.9);
+    --tab-text: #9CA3AF;
+    --tab-hover: #A5B4FC;
+    --tab-active-bg: linear-gradient(135deg, #312E81 0%, #4C1D95 100%);
+    --tab-active-text: #EEF2FF;
+    --tab-active-border: #6366F1;
+    --metric-bg: rgba(17, 24, 39, 0.9);
+    --metric-border: #374151;
+    --card-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+    --timeline-bg: rgba(17, 24, 39, 0.85);
+    --timeline-text: #E5E7EB;
+    --btn-bg: #1F2937;
+    --btn-text: #F3F4F6;
+    --btn-border: #4B5563;
+}
+
+/* Aplicación del fondo adaptativo */
 .stApp {
-    background: linear-gradient(135deg, #FBFBFE 0%, #F4F7FB 50%, #FAF5FF 100%);
-    background-attachment: fixed;
-    transition: all 0.5s ease-in-out;
+    background: var(--bg-gradient) !important;
+    background-attachment: fixed !important;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
-/* Transiciones suaves en todos los elementos interactivos */
-button, input, select, textarea, div[role="tab"], .stMetric, .element-container {
-    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+/* Transiciones suaves sin romper controles internos */
+button, div[role="tab"], .stMetric, .pastel-card {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Cabecera superior moderna con efecto glassmorphism */
+/* Cabecera superior */
 .top-header-banner {
-    background: rgba(255, 255, 255, 0.75);
+    background: var(--card-bg);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 1px solid var(--card-border);
     border-radius: 20px;
-    padding: 18px 28px;
-    margin-bottom: 22px;
-    box-shadow: 0 10px 30px -10px rgba(148, 163, 184, 0.15);
+    padding: 18px 26px;
+    margin-bottom: 20px;
+    box-shadow: var(--card-shadow);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -96,7 +166,7 @@ button, input, select, textarea, div[role="tab"], .stMetric, .element-container 
 .brand-title {
     font-size: 24px;
     font-weight: 700;
-    background: linear-gradient(135deg, #6B7280 0%, #4F46E5 50%, #7C3AED 100%);
+    background: linear-gradient(135deg, #818CF8 0%, #A78BFA 50%, #EC4899 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
@@ -104,10 +174,12 @@ button, input, select, textarea, div[role="tab"], .stMetric, .element-container 
 
 .brand-subtitle {
     font-size: 13px;
-    color: #64748B;
+    color: var(--text-secondary);
     margin-top: 4px;
+    margin-bottom: 0;
 }
 
+/* Badges adaptables */
 .badge-pastel {
     display: inline-block;
     padding: 6px 14px;
@@ -116,152 +188,114 @@ button, input, select, textarea, div[role="tab"], .stMetric, .element-container 
     font-weight: 600;
     letter-spacing: 0.3px;
 }
-.badge-mint { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
-.badge-lavender { background: #EDE9FE; color: #5B21B6; border: 1px solid #DDD6FE; }
-.badge-peach { background: #FFEDD5; color: #9A3412; border: 1px solid #FED7AA; }
-.badge-blue { background: #E0F2FE; color: #075985; border: 1px solid #BAE6FD; }
+.badge-mint { background: rgba(52, 211, 153, 0.18); color: #10B981; border: 1px solid rgba(52, 211, 153, 0.4); }
+.badge-lavender { background: rgba(167, 139, 250, 0.18); color: #8B5CF6; border: 1px solid rgba(167, 139, 250, 0.4); }
+.badge-peach { background: rgba(251, 146, 60, 0.18); color: #F97316; border: 1px solid rgba(251, 146, 60, 0.4); }
 
 /* Menú de navegación superior (Tabs pasteles) */
 div[data-baseweb="tab-list"] {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    border-radius: 18px;
-    padding: 8px 12px;
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    box-shadow: 0 4px 20px -4px rgba(148, 163, 184, 0.12);
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 24px;
+    background: var(--nav-bg) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 18px !important;
+    padding: 8px 12px !important;
+    border: 1px solid var(--nav-border) !important;
+    box-shadow: var(--card-shadow) !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    margin-bottom: 22px !important;
 }
 
 div[data-baseweb="tab"] {
     border-radius: 12px !important;
     padding: 10px 18px !important;
-    color: #64748B !important;
+    color: var(--tab-text) !important;
     font-weight: 600 !important;
     font-size: 13.5px !important;
     border: 1px solid transparent !important;
     background: transparent !important;
-    transition: all 0.25s ease !important;
 }
 
 div[data-baseweb="tab"]:hover {
-    color: #4F46E5 !important;
-    background: rgba(243, 244, 246, 0.8) !important;
+    color: var(--tab-hover) !important;
+    background: rgba(129, 140, 248, 0.1) !important;
     transform: translateY(-1px);
 }
 
 div[data-baseweb="tab"][aria-selected="true"] {
-    background: linear-gradient(135deg, #E0E7FF 0%, #EDE9FE 100%) !important;
-    color: #4338CA !important;
-    border: 1px solid #C7D2FE !important;
-    box-shadow: 0 4px 14px -3px rgba(99, 102, 241, 0.25) !important;
+    background: var(--tab-active-bg) !important;
+    color: var(--tab-active-text) !important;
+    border: 1px solid var(--tab-active-border) !important;
+    box-shadow: 0 4px 14px -3px rgba(99, 102, 241, 0.3) !important;
 }
 
 div[data-baseweb="tab-highlight"] {
     display: none !important;
 }
 
-/* Tarjetas pastel con efecto frosted glass */
+/* Tarjetas pastel adaptativas */
 .pastel-card {
-    background: rgba(255, 255, 255, 0.82);
+    background: var(--card-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(226, 232, 240, 0.9);
+    border: 1px solid var(--card-border);
     border-radius: 18px;
     padding: 22px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 24px -6px rgba(148, 163, 184, 0.12);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: var(--card-shadow);
+    color: var(--text-primary);
 }
 
-.pastel-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 30px -8px rgba(148, 163, 184, 0.2);
+.pastel-card h3, .pastel-card h4, .pastel-card b {
+    color: var(--text-primary) !important;
 }
 
-.pastel-card-mint { border-left: 5px solid #6EE7B7; }
+.pastel-card p, .pastel-card span, .pastel-card li {
+    color: var(--text-secondary);
+}
+
+.pastel-card-mint { border-left: 5px solid #34D399; }
 .pastel-card-lavender { border-left: 5px solid #A78BFA; }
-.pastel-card-peach { border-left: 5px solid #FDBA74; }
-.pastel-card-sky { border-left: 5px solid #7DD3FC; }
+.pastel-card-peach { border-left: 5px solid #FB923C; }
+.pastel-card-sky { border-left: 5px solid #60A5FA; }
 
-/* Métricas st.metric estilizadas */
+/* Métricas st.metric adaptables */
 div[data-testid="stMetric"] {
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid #E2E8F0;
-    border-radius: 16px;
-    padding: 14px 18px;
-    box-shadow: 0 4px 16px -2px rgba(148, 163, 184, 0.1);
-    transition: transform 0.25s ease;
+    background: var(--metric-bg) !important;
+    border: 1px solid var(--metric-border) !important;
+    border-radius: 16px !important;
+    padding: 14px 18px !important;
+    box-shadow: var(--card-shadow) !important;
 }
 
 div[data-testid="stMetric"]:hover {
     transform: translateY(-2px);
-    border-color: #CBD5E1;
 }
 
-/* Botones pastel con bordes suaves */
-.stButton > button {
-    border-radius: 12px !important;
-    font-weight: 600 !important;
-    padding: 8px 20px !important;
-    border: 1px solid #E2E8F0 !important;
-    background: #FFFFFF !important;
-    color: #334155 !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.stButton > button:hover {
-    border-color: #C7D2FE !important;
-    background: #EEF2FF !important;
-    color: #4338CA !important;
-    transform: translateY(-1.5px) !important;
-    box-shadow: 0 6px 16px -4px rgba(99, 102, 241, 0.2) !important;
-}
-
-.stButton > button:active {
-    transform: translateY(0px) !important;
-}
-
-/* Botones primarios con gradiente pastel */
-.stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #A5B4FC 0%, #C4B5FD 100%) !important;
-    color: #1E1B4B !important;
-    border: 1px solid #818CF8 !important;
-}
-
-.stButton > button[kind="primary"]:hover {
-    background: linear-gradient(135deg, #818CF8 0%, #A78BFA 100%) !important;
-    color: #FFFFFF !important;
-    box-shadow: 0 8px 20px -4px rgba(129, 140, 248, 0.4) !important;
-}
-
-/* Tablas estilizadas con bordes redondeados */
-div[data-testid="stDataFrame"] {
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid #E2E8F0;
-    box-shadow: 0 4px 18px -4px rgba(148, 163, 184, 0.1);
-}
-
-/* Timeline del historial de transformaciones */
+/* Timeline del historial */
 .timeline-item {
     padding: 10px 16px;
     margin-bottom: 8px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.7);
-    border-left: 4px solid #A5B4FC;
+    background: var(--timeline-bg);
+    border-left: 4px solid #818CF8;
     font-size: 13.5px;
-    color: #334155;
+    color: var(--timeline-text);
     display: flex;
     align-items: center;
     gap: 10px;
+    border: 1px solid var(--card-border);
+}
+
+/* Tablas estilizadas */
+div[data-testid="stDataFrame"] {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--card-border);
 }
 </style>
 """
-st.markdown(PASTEL_CSS, unsafe_allow_html=True)
+st.markdown(ADAPTIVE_CSS, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 2. Inicialización del Estado de Sesión (Session State)
@@ -297,7 +331,7 @@ n_cambios = len(st.session_state.historial)
 
 badge_html = (
     f'<span class="badge-pastel badge-mint">✓ {st.session_state.archivo_nombre} ({filas_actuales:,} filas · {cols_actuales} cols)</span> '
-    f'<span class="badge-pastel badge-lavender">{n_cambios} cambios aplicados</span>'
+    f'<span class="badge-pastel badge-lavender">{n_cambios} cambios</span>'
     if dataset_cargado
     else '<span class="badge-pastel badge-peach">Esperando carga de datos</span>'
 )
@@ -351,7 +385,6 @@ with tabs[0]:
 
     with col_up2:
         st.markdown("**Opciones rápidas:**")
-        # Si existe el archivo anime en la carpeta de trabajo, permitir cargarlo con 1 clic
         dataset_ejemplo = Path("top_15000_anime.csv")
         if dataset_ejemplo.exists():
             if st.button("🚀 Cargar Dataset Ejemplo (Anime)", use_container_width=True):
@@ -362,7 +395,6 @@ with tabs[0]:
                     st.session_state.archivo_nombre = "top_15000_anime.csv"
                     st.session_state.historial = ["Dataset 'top_15000_anime.csv' cargado"]
                     
-                    # Guardar snapshot inicial de métricas
                     p_init = perfilar_dataset(df_ej)
                     st.session_state.snapshot_metricas_inicio = {
                         "Faltantes": p_init["total_faltantes"],
@@ -401,16 +433,15 @@ with tabs[0]:
         df_ver = st.session_state.df_actual
         resumen = obtener_resumen_fuente(df_ver)
 
-        # Métricas rápidas
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Total Filas", f"{resumen['filas']:,}")
         c2.metric("Total Columnas", f"{resumen['columnas']}")
         c3.metric("Uso en Memoria", f"{resumen['memoria_mb']:.2f} MB")
-        c4.metric("Estado", "Activo para Limpieza")
+        c4.metric("Estado", "Listo para Auditoría")
 
         st.markdown("#### Vista Previa del Dataset")
         vista_opc = st.radio(
-            "Mostrar:",
+            "Mostrar registros:",
             ["Primeras 10 filas", "Últimas 10 filas", "Muestra aleatoria (10 filas)"],
             horizontal=True,
         )
@@ -439,12 +470,10 @@ with tabs[1]:
         st.markdown("### 🔎 Diagnóstico General de Salud del Dataset")
         st.caption("Visión panorámica de dimensiones, completitud, tipos de datos y duplicados.")
 
-        # Tarjetas KPI con severidad en colores pasteles
         col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
         col_m1.metric("Total Filas", f"{perfil['filas']:,}")
         col_m2.metric("Total Columnas", f"{perfil['columnas']}")
         
-        # Color semafórico para nulos
         pct_falt = perfil['pct_faltantes_global']
         col_m3.metric(
             "Celdas Vacías",
@@ -460,7 +489,6 @@ with tabs[1]:
         col_m5.metric("Memoria RAM", f"{perfil['memoria_mb']:.2f} MB")
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Detalle de columnas en tabla estructurada
         st.markdown("#### Detalle Estructural por Columna")
         df_cols_info = pd.DataFrame({
             "Columna": perfil["nombres_cols"],
@@ -470,14 +498,8 @@ with tabs[1]:
             "Valores Únicos": [df_diag[c].nunique(dropna=True) for c in perfil["nombres_cols"]],
         })
 
-        # Resaltar columnas con nulos
-        st.dataframe(
-            df_cols_info,
-            use_container_width=True,
-            hide_index=True,
-        )
+        st.dataframe(df_cols_info, use_container_width=True, hide_index=True)
 
-        # Distribución de tipos de variables
         col_t1, col_t2 = st.columns(2)
         with col_t1:
             st.markdown(
@@ -565,7 +587,6 @@ with tabs[3]:
         st.markdown("### 🧹 Taller de Limpieza Asistida y Controlada")
         st.caption("Ninguna modificación se aplica a ciegas. Cada panel cuenta con botón de confirmación explícita.")
 
-        # Botón de reversión de emergencia
         col_top_a, col_top_b = st.columns([3, 1])
         with col_top_b:
             if st.button("↺ Restaurar Dataset Original", use_container_width=True):
@@ -576,7 +597,6 @@ with tabs[3]:
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Paneles modulares en pestañas o columnas
         p1, p2, p3, p4 = st.tabs([
             "1. Duplicados",
             "2. Valores Faltantes",
@@ -748,7 +768,6 @@ with tabs[4]:
         st.markdown("### 🔄 Comparativa de Calidad: Antes vs. Después")
         st.caption("Verifica el impacto real de las transformaciones aplicadas.")
 
-        # Métricas iniciales vs actuales
         p_actual = perfilar_dataset(st.session_state.df_actual)
         init_m = st.session_state.snapshot_metricas_inicio or {
             "Faltantes": p_actual["total_faltantes"],
@@ -768,7 +787,6 @@ with tabs[4]:
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Gráfico comparativo
         col_g1, col_g2 = st.columns([1.5, 1])
         with col_g1:
             dict_antes = {"Faltantes": init_m["Faltantes"], "Duplicados": init_m["Duplicados"]}
@@ -803,7 +821,7 @@ with tabs[5]:
         df_plot = st.session_state.df_actual
         st.markdown('<div class="pastel-card pastel-card-mint">', unsafe_allow_html=True)
         st.markdown("### 📊 Exploración Visual Interactiva (EDA)")
-        st.caption("Visualiza patrones, correlaciones y rankings sobre los datos limpios.")
+        st.caption("Visualiza patrones, distribuciones y rankings sin bloqueos.")
 
         tipo_grafico = st.selectbox(
             "Selecciona el tipo de gráfico:",
@@ -819,17 +837,20 @@ with tabs[5]:
 
         cols_numericas = df_plot.select_dtypes(include="number").columns.tolist()
         cols_categoricas = df_plot.select_dtypes(include=["object", "category", "string"]).columns.tolist()
+        # Filtrar columnas categóricas con cardinalidad manejable para agrupaciones visuales
+        cols_cat_utiles = [c for c in cols_categoricas if df_plot[c].nunique() <= 40]
 
         try:
             if "Histograma" in tipo_grafico:
                 if not cols_numericas:
-                    st.warning("No hay columnas numéricas.")
+                    st.warning("No hay columnas numéricas disponibles en este dataset.")
                 else:
                     c_col, c_bins = st.columns([2, 1])
                     with c_col:
                         col_h = st.selectbox("Columna numérica:", cols_numericas)
                     with c_bins:
-                        nbins = st.slider("Bins:", 10, 100, 30)
+                        nbins = st.slider("Número de Bins:", 10, 80, 30)
+                    
                     fig = grafico_distribucion(df_plot, col_h, nbins=nbins)
                     st.plotly_chart(fig, use_container_width=True)
 
@@ -837,27 +858,35 @@ with tabs[5]:
                 if not cols_categoricas or not cols_numericas:
                     st.warning("Se requiere al menos una columna categórica y una numérica.")
                 else:
-                    c_cat, c_num, c_top = st.columns([1.5, 1.5, 1])
+                    c_cat, c_num, c_agg, c_top = st.columns([1.5, 1.5, 1, 1])
                     with c_cat:
                         col_c = st.selectbox("Columna categórica:", cols_categoricas)
                     with c_num:
                         col_n = st.selectbox("Métrica numérica:", cols_numericas)
+                    with c_agg:
+                        agg_opc = st.selectbox("Agregación:", ["sum", "mean", "count", "max", "min"])
                     with c_top:
                         top_n = st.slider("Top N:", 5, 25, 10)
-                    fig = grafico_barras_top(df_plot, col_c, col_n, top_n=top_n)
+                    
+                    fig = grafico_barras_top(df_plot, col_c, col_n, top_n=top_n, agregacion=agg_opc)
                     st.plotly_chart(fig, use_container_width=True)
 
             elif "Dispersión" in tipo_grafico:
                 if len(cols_numericas) < 2:
-                    st.warning("Se requieren al menos 2 columnas numéricas.")
+                    st.warning("Se requieren al menos 2 columnas numéricas para un diagrama de dispersión.")
                 else:
                     cx, cy, ccolor = st.columns(3)
                     with cx:
-                        col_x = st.selectbox("Eje X:", cols_numericas, index=0)
+                        col_x = st.selectbox("Eje X (Numérico):", cols_numericas, index=0)
                     with cy:
-                        col_y = st.selectbox("Eje Y:", cols_numericas, index=min(1, len(cols_numericas)-1))
+                        idx_y = 1 if len(cols_numericas) > 1 else 0
+                        col_y = st.selectbox("Eje Y (Numérico):", cols_numericas, index=idx_y)
                     with ccolor:
-                        col_col = st.selectbox("Color por categoría (opcional):", [None] + cols_categoricas)
+                        col_col = st.selectbox(
+                            "Color por categoría (opcional):",
+                            [None] + (cols_cat_utiles if cols_cat_utiles else cols_categoricas[:5]),
+                        )
+                    
                     fig = grafico_dispersion(df_plot, col_x, col_y, col_color=col_col)
                     st.plotly_chart(fig, use_container_width=True)
 
@@ -869,7 +898,11 @@ with tabs[5]:
                     with cb_num:
                         col_b_num = st.selectbox("Variable numérica:", cols_numericas)
                     with cb_cat:
-                        col_b_cat = st.selectbox("Agrupar por categoría (opcional):", [None] + cols_categoricas)
+                        col_b_cat = st.selectbox(
+                            "Agrupar por categoría (opcional):",
+                            [None] + (cols_cat_utiles if cols_cat_utiles else cols_categoricas[:5]),
+                        )
+                    
                     fig = grafico_caja_outliers(df_plot, col_b_num, col_b_cat)
                     st.plotly_chart(fig, use_container_width=True)
 
@@ -886,7 +919,7 @@ with tabs[5]:
                         fig = grafico_correlacion(df_plot, columnas=cols_corr_sel)
                         st.plotly_chart(fig, use_container_width=True)
                     else:
-                        st.info("Selecciona al menos 2 variables.")
+                        st.info("Selecciona al menos 2 variables numéricas.")
         except Exception as exc:
             st.error(f"Error al generar gráfico: {exc}")
 
@@ -941,4 +974,3 @@ with tabs[6]:
                 st.caption(f"Descarga Excel no disponible: {exc}")
 
         st.markdown("</div>", unsafe_allow_html=True)
-
